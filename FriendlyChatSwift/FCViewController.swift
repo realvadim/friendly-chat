@@ -114,7 +114,8 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
     }
     
     func loginSession() {
-        let authViewController = FUIAuth.defaultAuthUI()!.authViewController()
+        //FUIAuth //obsolete Swift
+        let authViewController = FIRAuthUI.default()!.authViewController()
         self.present(authViewController, animated: true, completion: nil)
     }
     
