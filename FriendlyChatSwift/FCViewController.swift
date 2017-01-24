@@ -54,8 +54,8 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
     
     override func viewDidLoad() {
         self.signedInStatus(isSignedIn: true)
-        
         // TODO: Handle what users see when view loads
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -71,6 +71,13 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
     
     func configureDatabase() {
         // TODO: configure database to sync messages
+        ref = FIRDatabase.database().reference()
+        
+        _refHandle = ref.child("messages").observe(.childAdded, with: { (snapshot) in
+            self.messages.append(snapshot)
+            self.messagesTable.insertRows(at: [IndexPath(row: self.messages.count - 1, section: 0)], with: .automatic)
+            self.scrollToBottomMessage()
+        })
     }
     
     func configureStorage() {
@@ -79,6 +86,7 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
     
     deinit {
         // TODO: set up what needs to be deinitialized when view is no longer being used
+        ref.child("messages").removeObserver(withHandle: _refHandle)
     }
     
     // MARK: Remote Config
@@ -110,6 +118,7 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
             messageTextField.delegate = self
             
             // TODO: Set up app to send and receive messages when signed in
+            configureDatabase()
         }
     }
     
@@ -123,6 +132,9 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
     
     func sendMessage(data: [String:String]) {
         // TODO: create method that pushes message to the firebase database
+        var mdata = data
+        mdata[Constants.MessageFields.name] = displayName
+        ref.child("messages").childByAutoId().setValue(mdata)
     }
     
     func sendPhotoMessage(photoData: Data) {
@@ -202,6 +214,17 @@ extension FCViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // dequeue cell
         let cell: UITableViewCell! = messagesTable.dequeueReusableCell(withIdentifier: "messageCell", for: indexPath)
+        
+        let messageSnapshot: FIRDataSnapshot! = self.messages[indexPath.row]
+        
+        let message = messageSnapshot.value as! [String: String]
+        
+        let name = message[Constants.MessageFields.name] ?? "[username]"
+        let text = message[Constants.MessageFields.text] ?? "[message]"
+        
+        cell.textLabel?.text = "\(name): \(text)"
+        cell.imageView?.image = self.placeholderImage
+        
         return cell!
         // TODO: update cell to display message data
     }
