@@ -17,6 +17,7 @@
 import UIKit
 import Firebase
 import FirebaseAuthUI
+import FirebaseGoogleAuthUI
 
 // MARK: - FCViewController
 
@@ -65,10 +66,11 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
     // MARK: Config
     
     func configureAuth() {
-        // TODO: configure firebase authentication
+        //config auth providers
+        FIRAuthUI.default()?.providers = [FIRGoogleAuthUI()]
         
         //listen for changed is authorization state
-        _authHandle = FIRAuth.auth()?.addStateDidChangeListener({ (auth, user) in
+        _authHandle = FIRAuth.auth()?.addStateDidChangeListener { (auth, user) in
             //Refresh table data
             self.messages.removeAll(keepingCapacity: false)
             self.messagesTable.reloadData()
@@ -88,7 +90,7 @@ class FCViewController: UIViewController, UINavigationControllerDelegate {
                 self.signedInStatus(isSignedIn: false)
                 self.loginSession()
             }
-        })
+        }
     }
     
     func configureDatabase() {
