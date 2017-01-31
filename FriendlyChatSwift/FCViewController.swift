@@ -265,12 +265,7 @@ extension FCViewController: UITableViewDelegate, UITableViewDataSource {
         let message = messageSnapshot.value as! [String: String]
         
         let name = message[Constants.MessageFields.name] ?? "[username]"
-        /*
-        let text = message[Constants.MessageFields.text] ?? "[message]"
         
-        cell.textLabel?.text = "\(name): \(text)"
-        cell.imageView?.image = self.placeholderImage
-        */
         //if photo message, then grab image and display it
         if let imageUrl = message[Constants.MessageFields.imageUrl] {
             cell!.textLabel?.text = "sent by: \(name)"
@@ -307,7 +302,30 @@ extension FCViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-            // TODO: if message contains an image, then display the image
+        // skip if keyboard is shown
+        guard !messageTextField.isFirstResponder else { return }
+        
+        // unpack message from firebase data snapshot
+        let messageSnapshot = messages[indexPath.row]
+        let message = messageSnapshot.value as! [String: String]
+        
+        // if tapped row with image message, then display image
+        if let imageUrl = message[Constants.MessageFields.imageUrl] {
+            //If the image is already cached, it doesn’t need to be downloaded again
+            if let cachedImage = imageCache.object(forKey: imageUrl as NSString) {
+                showImageDisplay(cachedImage)
+            }
+            else {
+                FIRStorage.storage().reference(forURL: imageUrl).data(withMaxSize: INT64_MAX, completion: { (data, error) in
+                    guard error == nil else {
+                        print("Error downloading")
+                        print(error!)
+                        return
+                    }
+                    self.showImageDisplay(UIImage.init(data: data!)!)
+                })
+            }
+        }
     }
     
     // MARK: Show Image Display
